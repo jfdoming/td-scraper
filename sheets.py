@@ -82,6 +82,7 @@ def main():
         body={"values": values},
     ).execute()
     print("{0} cells updated.".format(result.get("updatedCells", -1)))
+    input("Please press enter to continue.")
 
 if __name__ == "__main__":
     main()

@@ -20,7 +20,9 @@ def _go_frame(driver, name="tddetails"):
     driver.switch_to.frame(driver.find_element_by_name(name))
 
 def _go_home(driver):
-    _click(driver, "[data-analytics-click=\"Accounts\"]")
+    n, _ = _click(driver, "[data-analytics-click=\"Accounts\"]")
+    if n < 1:
+        _click(driver, "[analytics-click=\"Accounts\"]")
 
 def _get_plain_title(text):
     title = text.split('-')[0].strip()
@@ -35,6 +37,10 @@ def _get_file_path(text):
 def _clean_df(df, account_type):
     if df is None:
         return df
+    
+    if df.columns[0] != "Date":
+        # Drop first column.
+        df = df.drop(df.columns[0], axis=1)
 
     # Standardize column names.
     df.columns = ["Date", "Description", "Debit", "Credit", "Balance"]
@@ -45,10 +51,10 @@ def _clean_df(df, account_type):
         df = df.drop(df.index[:drop_index[-1]])
 
     # Descriptions should appear at the start of the string and be followed by "  ".
-    df["Description"] = df["Description"].str.extract("(.+?)(?:(?=  ).+)?$")
+    df["Description"] = df["Description"].str.extract("(?:View more )?(.+?)(?:(?=  ).+)?$")
 
-    # Dates should appear at the start of the string and be followed by "  ".
-    df["Date"] = df["Date"].str.extract("(.+?)(?:(?=  ).+)?$")
+    # Dates should appear at the start of the string and be followed by " ".
+    df["Date"] = df["Date"].str.extract("(.+? .+? .+?)(?:(?= ).+)?$")
 
     # Format dates nicely and drop non-date rows.
     df["Date"] = pd.to_datetime(df["Date"], format="%b %d, %Y", errors="coerce")
@@ -82,21 +88,21 @@ def _log_accounts_in_frame(driver, log):
     while True:
         print("Opening next account...")
         count, text = _click(driver, "table a.td-link-standalone-secondary", link_index)
-        time.sleep(4)
+        time.sleep(8)
 
         title = _get_plain_title(text)
         if ACCOUNT_TYPES.get(title) == "CREDIT":
             select = Select(driver.find_element_by_id("cycles"))
             for i in range(0, len(select.options)):
                 select.select_by_index(i)
-                time.sleep(2)
+                time.sleep(4)
 
                 df = _table_to_dataframe(driver, ".td-table.td-table-border-row", title)
                 if df is not None:
                     all_data = all_data.append(df)
         else:
             _click(driver, "#ql4") # View 120 days.
-            time.sleep(4)
+            time.sleep(8)
 
             df = _table_to_dataframe(driver, ".td-table.td-table-border-row", title)
             if df is not None:
@@ -104,7 +110,7 @@ def _log_accounts_in_frame(driver, log):
 
         print("Read data for account: ", text)
         _go_home(driver)
-        time.sleep(4)
+        time.sleep(8)
 
         link_index += 1
         if link_index >= count:
@@ -136,13 +142,15 @@ def scrape_latest(log=True):
 
         try:
             driver.get(login_url)
-            time.sleep(2)
+            time.sleep(4)
 
-            driver.find_element_by_id("username100").send_keys(username)
-            time.sleep(1)
-            driver.find_element_by_id("password").send_keys(password)
-            time.sleep(1)
-            _click(driver, ".otp-login > .td-container button")
+            driver.find_element_by_id("username").send_keys(username)
+            time.sleep(2)
+            driver.find_element_by_id("uapPassword").send_keys(password)
+            time.sleep(2)
+            _click(driver, ".login-form button.td-button-secondary")
+
+            input("Please press enter to continue once 2FA is complete.")
 
             iterations = 0
             while (
@@ -150,7 +158,7 @@ def scrape_latest(log=True):
                 and iterations < 10
             ):
                 iterations += 1
-                time.sleep(1)
+                time.sleep(2)
 
             if not driver.current_url.startswith("https://easyweb.td.com"):
                 print("Failed to log in, aborting...")
@@ -158,7 +166,7 @@ def scrape_latest(log=True):
                 return
 
             print("Successfully logged in!")
-            time.sleep(2) # Let the page load.
+            time.sleep(4) # Let the page load.
 
             _go_frame(driver)
 
