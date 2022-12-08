@@ -21,5 +21,5 @@ After moving to university, I started needing to track my expenses more carefull
        "<account 2 name in EasyWeb>": "<account 2 name in spreadsheet>",
    }
    ```
-4. Create a directory "data/" in the root directory.
+4. Download the file `credentials.json` from your Google Cloud app and put it in the root directory.
 5. Everything should just work now! Run `scraper.py` first, and assuming this succeeds, run `sheets.py` to upload the data to Google Sheets.
