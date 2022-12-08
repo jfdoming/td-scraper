@@ -1,3 +1,4 @@
+import logging
 import pickle
 import os.path
 import pandas as pd
@@ -85,4 +86,8 @@ def main():
     input("Please press enter to continue.")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logging.exception(e)
+    input("Press Enter to exit")

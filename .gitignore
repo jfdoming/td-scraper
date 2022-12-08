@@ -140,6 +140,10 @@ dmypy.json
 cython_debug/
 
 
+# Chromedriver
+chromedriver
+chromedriver.exe
+
 # Config files (local only)
 .config
 account_details.py

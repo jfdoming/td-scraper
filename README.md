@@ -13,7 +13,7 @@ After moving to university, I started needing to track my expenses more carefull
    <line 3=Google Sheets spreadsheet ID>
    ```
    Note that the last line is not required if you don't plan on uploading the data to Google Sheets.
-  
+
 3. Create a file "account_details.py" in the root directory, containing the following Python dictionary:
    ```python
    ACCOUNT_TYPES = {

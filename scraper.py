@@ -1,6 +1,7 @@
 import os
 import time
 import re
+import logging
 import pandas as pd
 from account_details import ACCOUNT_TYPES
 from selenium import webdriver
@@ -17,12 +18,13 @@ def _click(driver, selector, index=0):
     return len(els), text
 
 def _go_frame(driver, name="tddetails"):
+    driver.switch_to.default_content()
     driver.switch_to.frame(driver.find_element_by_name(name))
 
 def _go_home(driver):
-    n, _ = _click(driver, "[data-analytics-click=\"Accounts\"]")
+    n, _ = _click(driver, ".td-nav-left-label [data-analytics-click=\"Accounts\"]")
     if n < 1:
-        _click(driver, "[analytics-click=\"Accounts\"]")
+        _click(driver, ".td-nav-left-label [analytics-click=\"Accounts\"]")
 
 def _get_plain_title(text):
     title = text.split('-')[0].strip()
@@ -37,7 +39,7 @@ def _get_file_path(text):
 def _clean_df(df, account_type):
     if df is None:
         return df
-    
+
     if df.columns[0] != "Date":
         # Drop first column.
         df = df.drop(df.columns[0], axis=1)
@@ -87,11 +89,15 @@ def _log_accounts_in_frame(driver, log):
     all_data = pd.DataFrame()
     while True:
         print("Opening next account...")
+        _go_frame(driver)
+
         count, text = _click(driver, "table a.td-link-standalone-secondary", link_index)
         time.sleep(8)
 
         title = _get_plain_title(text)
-        if ACCOUNT_TYPES.get(title) == "CREDIT":
+        if title not in ACCOUNT_TYPES:
+            print(f"Warning: Account type not recognized: {title}")
+        elif "credit" in ACCOUNT_TYPES.get(title).lower():
             select = Select(driver.find_element_by_id("cycles"))
             for i in range(0, len(select.options)):
                 select.select_by_index(i)
@@ -101,7 +107,11 @@ def _log_accounts_in_frame(driver, log):
                 if df is not None:
                     all_data = all_data.append(df)
         else:
-            _click(driver, "#ql4") # View 120 days.
+            _click(driver, "#transSearchLink") # Expand date options.
+            time.sleep(2)
+            _click(driver, "#searchFromRadio") # Select date range.
+            time.sleep(1)
+            _click(driver, "#searchRangeRow input[value='Search']") # View past year.
             time.sleep(8)
 
             df = _table_to_dataframe(driver, ".td-table.td-table-border-row", title)
@@ -136,7 +146,7 @@ def scrape_latest(log=True):
         username = contents[0]
         password = contents[1]
         print("Username: ", username)
-        print("Password: ", password)
+        print("Password: ", "***" if password.strip() else "<missing>")
 
         driver = webdriver.Chrome(options=options)
 
@@ -145,9 +155,9 @@ def scrape_latest(log=True):
             time.sleep(4)
 
             driver.find_element_by_id("username").send_keys(username)
-            time.sleep(2)
+            time.sleep(1)
             driver.find_element_by_id("uapPassword").send_keys(password)
-            time.sleep(2)
+            time.sleep(1)
             _click(driver, ".login-form button.td-button-secondary")
 
             input("Please press enter to continue once 2FA is complete.")
@@ -158,7 +168,7 @@ def scrape_latest(log=True):
                 and iterations < 10
             ):
                 iterations += 1
-                time.sleep(2)
+                time.sleep(1)
 
             if not driver.current_url.startswith("https://easyweb.td.com"):
                 print("Failed to log in, aborting...")
@@ -167,8 +177,6 @@ def scrape_latest(log=True):
 
             print("Successfully logged in!")
             time.sleep(4) # Let the page load.
-
-            _go_frame(driver)
 
             _log_accounts_in_frame(driver, log)
             print("Finished reading account data. The data has been logged under `data/`.")
@@ -185,4 +193,8 @@ def get_scraped_data():
     get_scraped_data()
 
 if __name__ == '__main__':
-    scrape_latest()
+    try:
+        scrape_latest()
+    except Exception as e:
+        logging.exception(e)
+    input("Press Enter to exit")
