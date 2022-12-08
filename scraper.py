@@ -6,11 +6,12 @@ import pandas as pd
 from account_details import ACCOUNT_TYPES
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
 
 printable_re = re.compile('[^a-zA-Z0-9_ ]+')
 
 def _click(driver, selector, index=0):
-    els = driver.find_elements_by_css_selector(selector)
+    els = driver.find_elements(By.CSS_SELECTOR, selector)
     text = ""
     if index < len(els):
         text = els[index].text
@@ -19,7 +20,7 @@ def _click(driver, selector, index=0):
 
 def _go_frame(driver, name="tddetails"):
     driver.switch_to.default_content()
-    driver.switch_to.frame(driver.find_element_by_name(name))
+    driver.switch_to.frame(driver.find_element(By.NAME, name))
 
 def _go_home(driver):
     n, _ = _click(driver, ".td-nav-left-label [data-analytics-click=\"Accounts\"]")
@@ -77,7 +78,7 @@ def _clean_df(df, account_type):
     return df
 
 def _table_to_dataframe(driver, table_selector, account_type):
-    table = driver.find_elements_by_css_selector(table_selector)
+    table = driver.find_elements(By.CSS_SELECTOR, table_selector)
     result_df = None
     if len(table) != 0:
         result_df = pd.read_html(table[0].get_attribute("outerHTML"))
@@ -98,7 +99,7 @@ def _log_accounts_in_frame(driver, log):
         if title not in ACCOUNT_TYPES:
             print(f"Warning: Account type not recognized: {title}")
         elif "credit" in ACCOUNT_TYPES.get(title).lower():
-            select = Select(driver.find_element_by_id("cycles"))
+            select = Select(driver.find_element(By.ID, "cycles"))
             for i in range(0, len(select.options)):
                 select.select_by_index(i)
                 time.sleep(4)
@@ -154,9 +155,9 @@ def scrape_latest(log=True):
             driver.get(login_url)
             time.sleep(4)
 
-            driver.find_element_by_id("username").send_keys(username)
+            driver.find_element(By.ID, "username").send_keys(username)
             time.sleep(1)
-            driver.find_element_by_id("uapPassword").send_keys(password)
+            driver.find_element(By.ID, "uapPassword").send_keys(password)
             time.sleep(1)
             _click(driver, ".login-form button.td-button-secondary")
 
