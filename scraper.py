@@ -5,10 +5,28 @@ import logging
 import pandas as pd
 from account_details import ACCOUNT_TYPES
 from selenium import webdriver
-from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 
-printable_re = re.compile('[^a-zA-Z0-9_ ]+')
+DATA_DIR = "data"
+PRINTABLE_RE = re.compile('[^a-zA-Z0-9_ ]+')
+
+class MatSelect:
+    def __init__(self, driver, el):
+        self.driver = driver
+        self.el = el
+        self.options = None
+
+        self.select_by_index(0)
+
+    def select_by_index(self, i):
+        self.el.click()
+
+        # Refresh options?
+        self.options = self.driver.find_elements(By.TAG_NAME, "mat-option")
+        if i < 0 or i >= len(self.options):
+            raise ValueError(f"Index {i} out of range")
+        self.options[i].click()
+
 
 def _click(driver, selector, index=0):
     els = driver.find_elements(By.CSS_SELECTOR, selector)
@@ -29,13 +47,12 @@ def _go_home(driver):
 
 def _get_plain_title(text):
     title = text.split('-')[0].strip()
-    title = printable_re.sub('', title)
+    title = PRINTABLE_RE.sub('', title)
     return title
 
 def _get_file_path(text):
     title = _get_plain_title(text)
-    file = "data/{title}.{{ext}}".format(title=title)
-    return file
+    return os.path.join(DATA_DIR, "{title}.{{ext}}".format(title=title))
 
 def _clean_df(df, account_type):
     if df is None:
@@ -93,18 +110,21 @@ def _log_accounts_in_frame(driver, log):
         _go_frame(driver)
 
         count, text = _click(driver, "table a.td-link-standalone-secondary", link_index)
-        time.sleep(8)
+        time.sleep(6)
 
         title = _get_plain_title(text)
         if title not in ACCOUNT_TYPES:
             print(f"Warning: Account type not recognized: {title}")
         elif "credit" in ACCOUNT_TYPES.get(title).lower():
-            select = Select(driver.find_element(By.ID, "cycles"))
+            select = MatSelect(driver, driver.find_element(By.ID, "matselect-paymentPlanCycleSelect"))
             for i in range(0, len(select.options)):
                 select.select_by_index(i)
                 time.sleep(4)
 
-                df = _table_to_dataframe(driver, ".td-table.td-table-border-row", title)
+                selector = "#paymentPlanPostedTransactionSubHeading + * .mat-table"
+                if not driver.find_elements(By.CSS_SELECTOR, selector):
+                    selector = ".mat-table"
+                df = _table_to_dataframe(driver, selector, title)
                 if df is not None:
                     all_data = all_data.append(df)
         else:
@@ -121,7 +141,7 @@ def _log_accounts_in_frame(driver, log):
 
         print("Read data for account: ", text)
         _go_home(driver)
-        time.sleep(8)
+        time.sleep(4)
 
         link_index += 1
         if link_index >= count:
@@ -130,7 +150,7 @@ def _log_accounts_in_frame(driver, log):
     if log:
         all_data.sort_values("Date", kind="mergesort", inplace=True)
         all_data.reset_index(drop=True, inplace=True)
-
+        os.makedirs(DATA_DIR, exist_ok=True)
         file = _get_file_path("combined")
         all_data.to_csv(file.format(ext="csv"))
         all_data.to_pickle(file.format(ext="pickle"))
@@ -180,7 +200,7 @@ def scrape_latest(log=True):
             time.sleep(4) # Let the page load.
 
             _log_accounts_in_frame(driver, log)
-            print("Finished reading account data. The data has been logged under `data/`.")
+            print(f"Finished reading account data. The data has been logged under `{DATA_DIR}{os.sep}`.")
         finally:
             driver.close()
 
@@ -188,7 +208,7 @@ def get_scraped_data():
     files = os.listdir("data") if os.path.exists("data") else []
     files = [file for file in files if file.endswith(".pickle")]
     if len(files):
-        return [pd.read_pickle("data/" + file) for file in files]
+        return [pd.read_pickle(os.path.join(DATA_DIR, file)) for file in files]
 
     scrape_latest()
     get_scraped_data()
