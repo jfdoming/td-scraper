@@ -34,3 +34,4 @@ fi
 
 rm -f "$filename.bak"
 read -n 1 -s -r -p "Update complete, press any key to exit..."
+echo
