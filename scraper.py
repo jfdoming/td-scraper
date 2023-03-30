@@ -128,7 +128,7 @@ def _log_accounts_in_frame(driver, log):
                 if df is not None:
                     all_data = all_data.append(df)
         else:
-            _click(driver, "#transSearchLink") # Expand date options.
+            _click(driver, "#transSearchLink[aria-expanded=false]") # Expand date options.
             time.sleep(2)
             _click(driver, "#searchFromRadio") # Select date range.
             time.sleep(1)
