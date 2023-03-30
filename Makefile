@@ -6,10 +6,10 @@ update:
 	@. env/bin/activate; bash scripts/update_cd.sh
 
 scrape:
-	@. env/bin/activate; PATH="${PATH}:." python3 scraper.py
+	@. env/bin/activate; PATH="${PATH}:./scripts" python3 scraper.py
 
 save:
-	@. env/bin/activate; PATH="${PATH}:." python3 sheets.py
+	@. env/bin/activate; PATH="${PATH}:./scripts" python3 sheets.py
 
 help:
 	@echo "Usage: make [run | update | scrape | save | help]"
