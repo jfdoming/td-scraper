@@ -20,7 +20,7 @@ if not version_tags:
     print("No version tags!")
     sys.exit(1)
 
-stable_tags = [tag.parent for tag in version_tags if "stable" in tag.parent.text]
+stable_tags = [tag.parent.parent for tag in version_tags if "stable" in tag.parent.parent.text]
 if not stable_tags:
     print("No stable tags!")
     sys.exit(1)
