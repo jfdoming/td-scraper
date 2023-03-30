@@ -19,6 +19,7 @@ if ! unzip -o "chromedriver.zip"; then
     exit 1
 fi
 rm "chromedriver.zip"
+rm -f "LICENSE.chromedriver"
 if [ -f chromedriver.exe ]; then
     filename=chromedriver.exe
 else
