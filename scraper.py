@@ -3,14 +3,15 @@ import time
 import re
 import logging
 import pandas as pd
-from account_details import ACCOUNT_TYPES
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 DATA_DIR = "data"
-PRINTABLE_RE = re.compile('[^a-zA-Z0-9_ ]+')
+PRINTABLE_RE = re.compile(r"[^a-zA-Z0-9_ ]+")
 
-class MatSelect:
+ACCOUNT_TYPES = os.environ["ACCOUNT_TYPES"]
+
+class TDMatSelect:
     def __init__(self, driver, el):
         self.driver = driver
         self.el = el
@@ -84,8 +85,8 @@ def _clean_df(df, account_type):
     df.drop(["Balance"], axis=1, inplace=True)
 
     # Merge the "Debit" and "Credit" columns.
-    df["Debit"] = df["Debit"].str.extract("([\d,]+\.\d+)", expand=False).map(lambda val: val.replace(",", "") if type(val) == str else val).fillna("x")
-    df["Credit"] = df["Credit"].str.extract("([\d,]+\.\d+)", expand=False).map(lambda val: val.replace(",", "") if type(val) == str else val).fillna("x")
+    df["Debit"] = df["Debit"].str.extract(r"([\d,]+\.\d+)", expand=False).map(lambda val: val.replace(",", "") if type(val) == str else val).fillna("x")
+    df["Credit"] = df["Credit"].str.extract(r"([\d,]+\.\d+)", expand=False).map(lambda val: val.replace(",", "") if type(val) == str else val).fillna("x")
     df["Amount"] = ((df["Debit"] != "x") * ("-" + df["Debit"]) + (df["Credit"] != "x") * df["Credit"]).astype(float)
     df.drop(["Debit", "Credit"], axis=1, inplace=True)
 
@@ -116,7 +117,7 @@ def _log_accounts_in_frame(driver, log):
         if title not in ACCOUNT_TYPES:
             print(f"Warning: Account type not recognized: {title}")
         elif "credit" in ACCOUNT_TYPES.get(title).lower():
-            select = MatSelect(driver, driver.find_element(By.ID, "matselect-paymentPlanCycleSelect"))
+            select = TDMatSelect(driver, driver.find_element(By.ID, "matselect-paymentPlanCycleSelect"))
             for i in range(0, len(select.options)):
                 select.select_by_index(i)
                 time.sleep(4)
@@ -157,52 +158,68 @@ def _log_accounts_in_frame(driver, log):
     else:
         print(all_data)
 
-def scrape_latest(log=True):
+def scrape_latest(username, password, log=True):
+    print("Username: ", username)
+    print("Password: ", "***" if password.strip() else "<missing>")
+
     login_url = "https://easyweb.td.com/"
 
     options = webdriver.ChromeOptions()
-    #options.add_argument("--headless")
+    options.add_argument("--headless=new")
+
+    driver = webdriver.Chrome(options=options)
+
+    try:
+        driver.get(login_url)
+        time.sleep(4)
+
+        driver.find_element(By.ID, "username").send_keys(username)
+        time.sleep(1)
+        driver.find_element(By.ID, "uapPassword").send_keys(password)
+        time.sleep(1)
+        _click(driver, ".login-form button.td-button-secondary")
+
+        input("Please press enter to continue once 2FA is complete.")
+
+        iterations = 0
+        while (
+            not driver.current_url.startswith("https://easyweb.td.com")
+            and iterations < 10
+        ):
+            iterations += 1
+            time.sleep(1)
+
+        if not driver.current_url.startswith("https://easyweb.td.com"):
+            print("Failed to log in, aborting...")
+            print(driver.current_url)
+            return
+
+        print("Successfully logged in!")
+        time.sleep(4) # Let the page load.
+
+        _log_accounts_in_frame(driver, log)
+        print(f"Finished reading account data. The data has been logged under `{DATA_DIR}{os.sep}`.")
+    finally:
+        driver.close()
+
+
+def read_config_file():
     with open(".config", "r") as config:
-        contents = config.read().splitlines()
+        contents = json.load(config)
         username = contents[0]
         password = contents[1]
-        print("Username: ", username)
-        print("Password: ", "***" if password.strip() else "<missing>")
+        return username, password
 
-        driver = webdriver.Chrome(options=options)
 
-        try:
-            driver.get(login_url)
-            time.sleep(4)
+def format_scraper_kwargs(kwargs):
+    VALID_KWARGS = {
+        "username",
+        "password",
+    }
+    return {
+        kwarg: kwargs[kwarg] for kwarg in VALID_KWARGS
+    }
 
-            driver.find_element(By.ID, "username").send_keys(username)
-            time.sleep(1)
-            driver.find_element(By.ID, "uapPassword").send_keys(password)
-            time.sleep(1)
-            _click(driver, ".login-form button.td-button-secondary")
-
-            input("Please press enter to continue once 2FA is complete.")
-
-            iterations = 0
-            while (
-                not driver.current_url.startswith("https://easyweb.td.com")
-                and iterations < 10
-            ):
-                iterations += 1
-                time.sleep(1)
-
-            if not driver.current_url.startswith("https://easyweb.td.com"):
-                print("Failed to log in, aborting...")
-                print(driver.current_url)
-                return
-
-            print("Successfully logged in!")
-            time.sleep(4) # Let the page load.
-
-            _log_accounts_in_frame(driver, log)
-            print(f"Finished reading account data. The data has been logged under `{DATA_DIR}{os.sep}`.")
-        finally:
-            driver.close()
 
 def get_scraped_data():
     files = os.listdir("data") if os.path.exists("data") else []
@@ -210,12 +227,22 @@ def get_scraped_data():
     if len(files):
         return [pd.read_pickle(os.path.join(DATA_DIR, file)) for file in files]
 
-    scrape_latest()
+    main()
     get_scraped_data()
 
-if __name__ == '__main__':
+
+def handler(event, context):
+    scrape_latest(*format_scraper_kwargs(event))
+
+
+def main():
     try:
-        scrape_latest()
+        scrape_latest(*format_scraper_kwargs(read_config_file()))
     except Exception as e:
         logging.exception(e)
+
     input("Press Enter to exit")
+
+
+if __name__ == '__main__':
+    main()

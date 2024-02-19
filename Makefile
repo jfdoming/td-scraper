@@ -1,15 +1,23 @@
-.PHONY: run update scrape save help
+ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+OPTS := -p 80:8080 --rm --env-file .env \
+	    --volume ${ROOT_DIR}/scraper.py:/var/task/main.py \
+		td-scraper
 
-run: update scrape save
+.PHONY: build run run@arm64 run@amd64 help
 
-update:
-	@. env/bin/activate; bash scripts/update_cd.sh
+run: run@amd64
 
-scrape:
-	@. env/bin/activate; PATH="${PATH}:./scripts" python3 scraper.py
+run@amd64: build
+	@docker run --platform linux/amd64 ${OPTS}
 
-save:
-	@. env/bin/activate; PATH="${PATH}:./scripts" python3 sheets.py
+run@arm64: build
+	@docker run --platform linux/arm64 ${OPTS}
+
+build:
+	@docker build . -t td-scraper
+
+test:
+	@curl localhost/2015-03-31/functions/function/invocations -d "$$(cat account_details.json)" 2>/dev/null | python3 local/pretty_output.py
 
 help:
-	@echo "Usage: make [run | update | scrape | save | help]"
+	@echo "Usage: make [build | run | help]"

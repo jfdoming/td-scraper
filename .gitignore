@@ -144,10 +144,10 @@ chromedriver
 chromedriver.exe
 
 # Config files (local only)
-.config
-account_details.py
+account_details.json
 credentials.json
 token.pickle
+.env
 
 # Output
 data/*
