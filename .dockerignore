@@ -1,9 +1,5 @@
-env/
 data/
-.env
 *.txt
 *.json
-*.pickle
 *.md
-requirements.txt
 !requirements-scraper.txt

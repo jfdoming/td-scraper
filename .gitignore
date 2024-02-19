@@ -139,15 +139,9 @@ dmypy.json
 cython_debug/
 
 
-# Chromedriver
-chromedriver
-chromedriver.exe
-
 # Config files (local only)
-account_details.json
-credentials.json
-token.pickle
-.env
+account_credentials.json
+account_types.json
 
 # Output
 data/*
