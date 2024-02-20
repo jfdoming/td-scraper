@@ -19,19 +19,12 @@ def scrape_latest(config: Config):
         time.sleep(4)
 
         browser.select(id="username").send_keys(config.username)
-        time.sleep(1)
         browser.select(id="uapPassword").send_keys(
             config.password.get_secret_value() if config.password else ""
         )
-        time.sleep(1)
         browser.click(query=".login-form button.td-button-secondary")
 
-        time.sleep(10)
-        browser._SeleniumInterface__driver.save_screenshot(
-            "/var/task/screenshot.png"
-        )
-        raise Exception(browser.url)
-        browser.click(query=".otp-section button.td-button-secondary")
+        time.sleep(0.5)
         input("Please press enter to continue once 2FA is complete.")
 
         iterations = 0
