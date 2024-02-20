@@ -3,8 +3,10 @@ from typing import Any
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 
 from scrape.interface import Interface
+from scrape.interface.interface import SelectOptions
 
 
 class SeleniumInterface(Interface):
@@ -65,35 +67,26 @@ class SeleniumInterface(Interface):
     def url(self, url: str):
         self.__driver.get(url)
 
-    def select(self, id: str = None, query: str = None, index: int = None):
-        if id is not None:
-            return self.__driver.find_element(By.ID, id)
-        if query is not None:
-            els = self.__driver.find_elements(By.CSS_SELECTOR, query)
-            if index is None:
-                return els
-            return els[index]
+    def _by_id(self, id: str) -> WebElement | None:
+        return self.__driver.find_element(By.ID, id)
 
-        raise ValueError("No selector specified")
+    def _by_query(
+        self,
+        query: str,
+    ) -> list[WebElement]:
+        return self.__driver.find_elements(By.CSS_SELECTOR, query)
 
-    def __select_for_action(self, *args, **kwargs):
-        el = self.select(*args, **kwargs)
-        if isinstance(el, list):
-            if len(el) != 1:
-                raise ValueError(
-                    "Ambiguous element selection, please specify an index"
-                )
-            el = el[0]
-        return el
+    def _by_text(self, els: list[WebElement], text: str) -> list[WebElement]:
+        return [el for el in els if el.text == text]
 
-    def click(self, *args, **kwargs):
-        el = self.__select_for_action(*args, **kwargs)
+    def click(self, **kwargs: SelectOptions):
+        el = self._select_for_action(**kwargs)
         el.click()
         return el
 
-    def type(self, *args, **kwargs):
-        el = self.__select_for_action(*args, **kwargs)
-        el.send_keys()
+    def type(self, text: str, **kwargs: SelectOptions):
+        el = self._select_for_action(**kwargs)
+        el.send_keys(text)
         return el
 
     def screenshot(self, path: str = "/var/task/scrape/screenshot.png"):

@@ -1,8 +1,10 @@
 import os
+import sys
 import time
 
 from scrape.config import Config
 from scrape.interface import Interface
+from scrape.otp import await_otp
 
 BASE_URL = "https://easyweb.td.com/"
 
@@ -18,22 +20,38 @@ def scrape_latest(config: Config):
         browser.url = BASE_URL
         time.sleep(4)
 
-        browser.select(id="username").send_keys(config.username)
-        browser.select(id="uapPassword").send_keys(
-            config.password.get_secret_value() if config.password else ""
+        browser.type(config.username, id="username")
+        browser.type(
+            config.password.get_secret_value() if config.password else "",
+            id="uapPassword",
         )
         browser.click(query=".login-form button.td-button-secondary")
 
-        time.sleep(0.5)
-        input("Please press enter to continue once 2FA is complete.")
+        time.sleep(2)
+        otp_button = browser.select(
+            query=".otp-section button.td-button-secondary",
+            index=0,
+            text="Text me",
+        )
+        if otp_button:
+            otp_button.click()
+            browser.type(await_otp(config), id="code")
+            browser.click(
+                query="form .td-button.td-button-secondary",
+                text="Enter",
+            )
+        else:
+            # No OTP was requested, so we can assume we're already logging in.
+            pass
 
         iterations = 0
         while not browser.url.startswith(BASE_URL) and iterations < 10:
             iterations += 1
             time.sleep(1)
         if not browser.url.startswith(BASE_URL):
-            print("Failed to log in, aborting...")
-            print(browser.url)
+            print("Failed to log in, aborting...", file=sys.stderr)
+            print(browser.url, file=sys.stderr)
+            browser.screenshot()
             return
 
         print("Successfully logged in!")

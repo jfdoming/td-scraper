@@ -15,7 +15,6 @@ def main():
         config = json.loads(sys.argv[1])
     else:
         config = read_config_file()
-    print(type(config["password"]), file=sys.stderr)
     scrape_latest(Config(**config))
 
     input("Press Enter to exit")
