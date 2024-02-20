@@ -1,0 +1,17 @@
+COPY requirements-scraper.txt /var/task/requirements.txt
+RUN pip install -r /var/task/requirements.txt
+COPY lambda_function.py main.py /var/task/
+COPY scrape/ /var/task/scrape/
+
+# Chrome needs to run as a non-root user.
+#ARG USERNAME=scraper
+#ARG USER_UID=1000
+#ARG USER_GID=$USER_UID
+
+# Create the user
+#RUN /usr/sbin/groupadd --gid $USER_GID $USERNAME \
+#    && /usr/sbin/useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+#USER $USERNAME
+
+# Reset this to the normal AWS convention.
+CMD ["lambda_function.lambda_handler"]
