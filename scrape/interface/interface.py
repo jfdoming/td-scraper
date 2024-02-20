@@ -1,4 +1,10 @@
 from abc import ABC, abstractmethod
+from typing import TypedDict
+
+
+class SelectOptions(TypedDict):
+    id: str | None
+    query: str | None
 
 
 class Interface(ABC):
@@ -19,5 +25,21 @@ class Interface(ABC):
         pass
 
     @abstractmethod
-    def select(self, id: str = None):
+    def select(self, **kwargs: SelectOptions):
+        pass
+
+    @abstractmethod
+    def click(self, **kwargs: SelectOptions):
+        pass
+
+    @abstractmethod
+    def type(
+        self,
+        text: str,
+        **kwargs: SelectOptions,
+    ):
+        pass
+
+    @abstractmethod
+    def screenshot(self, path: str | None = None):
         pass

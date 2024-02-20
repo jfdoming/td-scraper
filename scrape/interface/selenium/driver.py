@@ -71,20 +71,30 @@ class SeleniumInterface(Interface):
         if query is not None:
             els = self.__driver.find_elements(By.CSS_SELECTOR, query)
             if index is None:
-                if len(els) > 1:
-                    raise ValueError(f"Ambiguous query {query}")
-                elif not els:
-                    raise ValueError(
-                        f"No elements found matching query {query}"
-                    )
-                return els[0]
-            if index >= len(els):
-                raise StopIteration()
+                return els
             return els[index]
 
         raise ValueError("No selector specified")
 
-    def click(self, *args, **kwargs):
+    def __select_for_action(self, *args, **kwargs):
         el = self.select(*args, **kwargs)
+        if isinstance(el, list):
+            if len(el) != 1:
+                raise ValueError(
+                    "Ambiguous element selection, please specify an index"
+                )
+            el = el[0]
+        return el
+
+    def click(self, *args, **kwargs):
+        el = self.__select_for_action(*args, **kwargs)
         el.click()
         return el
+
+    def type(self, *args, **kwargs):
+        el = self.__select_for_action(*args, **kwargs)
+        el.send_keys()
+        return el
+
+    def screenshot(self, path: str = "/var/task/scrape/screenshot.png"):
+        self.__driver.save_screenshot(path)
