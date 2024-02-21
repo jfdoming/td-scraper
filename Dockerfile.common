@@ -3,7 +3,7 @@ RUN pip install -r /var/task/requirements.txt
 COPY lambda_function.py main.py /var/task/
 COPY scrape/ /var/task/scrape/
 COPY scripts/ /var/task/scripts/
-RUN /var/task/scripts/update_cd.sh
+RUN SUDO="$(command -v sudo > /dev/null && echo sudo)" $SUDO /var/task/scripts/update_cd.sh
 
 # Reset this to the normal AWS convention.
 CMD ["lambda_function.lambda_handler"]

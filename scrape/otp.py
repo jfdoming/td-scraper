@@ -11,6 +11,10 @@ import boto3
 from scrape.config import Config
 from scrape.utils.otp import unpack_otp
 
+OTP_OBJ_KEY = None
+if "IS_DEV" not in os.environ:
+    OTP_OBJ_KEY = os.environ["OTP_OBJ_KEY"]
+
 
 def __utcnow():
     return datetime.now(tz=timezone.utc)
@@ -54,11 +58,10 @@ def __s3_client() -> boto3.client:
 def __poll_otp_s3(otp_request_time: datetime, config: Config) -> str | None:
     client = __s3_client()
     bucket = config.otp_bucket
-    key = "td-scraper/otp.bin"
 
     try:
         response = client.get_object(
-            Bucket=bucket, Key=key, IfModifiedSince=otp_request_time
+            Bucket=bucket, Key=OTP_OBJ_KEY, IfModifiedSince=otp_request_time
         )
         return unpack_otp(response["Body"].read())
     except client.exceptions.ClientError as e:

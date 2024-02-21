@@ -147,3 +147,4 @@ account_types.json
 # Output
 data/*
 scrape/screenshot.png
+*.zip

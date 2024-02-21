@@ -3,6 +3,7 @@ data/
 *.json
 *.md
 *.png
+*.zip
 .otp
 # TODO(jfdoming): remove once CfT supports arm64
 !requirements-dev.txt
