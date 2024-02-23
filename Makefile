@@ -27,7 +27,7 @@ build-otp:
 
 layers: layers/py_deps_layer.zip layers/chrome_layer.zip
 
-layers/py_deps_layer.zip: scripts/build_py_deps_layer.sh
+layers/py_deps_layer.zip: scripts/build_py_deps_layer.sh requirements-scraper.txt
 	@scripts/build_py_deps_layer.sh
 
 layers/chrome_layer.zip: scripts/build_chromium_layer.sh
