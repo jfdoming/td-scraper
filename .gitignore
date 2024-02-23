@@ -148,3 +148,4 @@ account_types.json
 data/*
 scrape/screenshot.png
 *.zip
+layers/

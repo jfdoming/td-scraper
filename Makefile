@@ -3,6 +3,7 @@ OPTS := -p 80:8080 --rm -e IS_DEV=1 --env-file <(echo "ACCOUNT_TYPES='$$(cat acc
 	    --volume ${ROOT_DIR}/scrape:/var/task/scrape \
 	    --volume ${ROOT_DIR}/main.py:/var/task/main.py \
 		--volume ${ROOT_DIR}/.otp:/var/task/.otp \
+		--volume ${ROOT_DIR}/layers:/var/task/layers \
 		td-scraper
 
 .PHONY: build@amd64 build@arm64 build-otp run run@arm64 run@amd64 otp help
@@ -23,6 +24,14 @@ build@arm64:
 
 build-otp:
 	@tempdir="$$(mktemp -d)" && mkdir -p "$$tempdir/otp" && mkdir -p "$$tempdir/scrape/utils" && cp -r otp/* "$$tempdir/otp/" && cp scrape/utils/otp.py "$$tempdir/scrape/utils/" && pushd "$$tempdir" && touch scrape/__init__.py && zip -r otp-lambda.zip * && popd && mv "$$tempdir/otp-lambda.zip" . && rm -rd "$$tempdir"
+
+layers: layers/py_deps_layer.zip layers/chrome_layer.zip
+
+layers/py_deps_layer.zip: scripts/build_py_deps_layer.sh
+	@scripts/build_py_deps_layer.sh
+
+layers/chrome_layer.zip: scripts/build_chromium_layer.sh
+	@scripts/build_chromium_layer.sh
 
 test:
 	@curl localhost/2015-03-31/functions/function/invocations -d "$$(cat account_credentials.json)" 2>/dev/null | python3 local/pretty_output.py
