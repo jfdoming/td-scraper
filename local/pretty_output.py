@@ -6,5 +6,8 @@ print("---")
 if "errorType" in resp:
     print(resp["errorMessage"], file=sys.stderr)
     sys.exit(1)
-else:
-    print(resp)
+elif "status" in resp:
+    print(resp["stdout"])
+    print(resp["stderr"], file=sys.stderr)
+    if resp["status"] == "error":
+        sys.exit(1)

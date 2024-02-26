@@ -14,6 +14,7 @@ from scrape.utils.otp import unpack_otp
 OTP_OBJ_KEY = None
 if "IS_DEV" not in os.environ:
     OTP_OBJ_KEY = os.environ["OTP_OBJ_KEY"]
+    OTP_OBJ_BUCKET = os.environ["OTP_OBJ_BUCKET"]
 
 
 def __utcnow():
@@ -56,12 +57,16 @@ def __s3_client() -> boto3.client:
 
 
 def __poll_otp_s3(otp_request_time: datetime, config: Config) -> str | None:
+    if config.verbosity > 1:
+        print("Polling S3 for OTP...", file=sys.stderr)
+
     client = __s3_client()
-    bucket = config.otp_bucket
 
     try:
         response = client.get_object(
-            Bucket=bucket, Key=OTP_OBJ_KEY, IfModifiedSince=otp_request_time
+            Bucket=OTP_OBJ_BUCKET,
+            Key=OTP_OBJ_KEY,
+            IfModifiedSince=otp_request_time,
         )
         return unpack_otp(response["Body"].read())
     except client.exceptions.ClientError as e:
@@ -73,7 +78,7 @@ def __poll_otp_s3(otp_request_time: datetime, config: Config) -> str | None:
 def await_otp(config: Config):
     otp_request_time = __utcnow()
 
-    if "IS_DEV" in os.environ:
+    if "IS_DEV" in os.environ and config.verbosity > 0:
         print(
             "Please run `make otp` to complete the 2FA process.",
             file=sys.stderr,

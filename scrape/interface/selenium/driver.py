@@ -36,7 +36,8 @@ class SeleniumInterface(Interface):
     @staticmethod
     def __create_options(options_dict: dict[str, Any]):
         options = webdriver.ChromeOptions()
-        options.binary_location = "/opt/chrome/chrome"
+        options.binary_location = "/opt/bin/chromium"
+        options.capabilities
         for key, value in options_dict.items():
             if isinstance(value, bool):
                 if value:
@@ -50,10 +51,16 @@ class SeleniumInterface(Interface):
         self.__options = SeleniumInterface.__create_options(
             self.__get_options()
         )
+        self.__service = webdriver.chrome.service.Service(
+            executable_path="/opt/bin/chromedriver"
+        )
         self.__driver = None
 
     def __enter__(self):
-        self.__driver = webdriver.Chrome(options=self.__options)
+        self.__driver = webdriver.Chrome(
+            options=self.__options,
+            service=self.__service,
+        )
         return self
 
     def __exit__(self, *_):

@@ -17,8 +17,14 @@ def scrape_latest(config: Config):
     print("Password: ", config.password or "<missing>")
 
     with Interface.create(engine="selenium") as browser:
+        if config.verbosity > 1:
+            print("Navigating to TD EasyWeb...")
+
         browser.url = BASE_URL
         time.sleep(4)
+
+        if config.verbosity > 1:
+            print("Logging in...")
 
         browser.type(config.username, id="username")
         browser.type(
@@ -26,8 +32,11 @@ def scrape_latest(config: Config):
             id="uapPassword",
         )
         browser.click(query=".login-form button.td-button-secondary")
-
         time.sleep(2)
+
+        if config.verbosity > 1:
+            print("Sending OTP...")
+
         otp_button = browser.select(
             query=".otp-section button.td-button-secondary",
             index=0,
@@ -44,6 +53,9 @@ def scrape_latest(config: Config):
             # No OTP was requested, so we can assume we're already logging in.
             pass
 
+        if config.verbosity > 1:
+            print("Waiting for login to complete...")
+
         iterations = 0
         while not browser.url.startswith(BASE_URL) and iterations < 10:
             iterations += 1
@@ -56,6 +68,9 @@ def scrape_latest(config: Config):
 
         print("Successfully logged in!")
         time.sleep(4)  # Let the page load.
+
+        if config.verbosity > 1:
+            print("Navigating to accounts...")
 
         _log_accounts_in_frame(browser._SeleniumInterface__driver, config)
         print(

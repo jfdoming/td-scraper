@@ -25,13 +25,19 @@ build@arm64:
 build-otp:
 	@tempdir="$$(mktemp -d)" && mkdir -p "$$tempdir/otp" && mkdir -p "$$tempdir/scrape/utils" && cp -r otp/* "$$tempdir/otp/" && cp scrape/utils/otp.py "$$tempdir/scrape/utils/" && pushd "$$tempdir" && touch scrape/__init__.py && zip -r otp-lambda.zip * && popd && mv "$$tempdir/otp-lambda.zip" . && rm -rd "$$tempdir"
 
-layers: layers/py_deps_layer.zip layers/chrome_layer.zip
+layers: layers/py_deps_layer.zip layers/chrome_layer.zip layers/scraper_layer.zip layers/chromedriver_local_libs_layer.zip
 
 layers/py_deps_layer.zip: scripts/build_py_deps_layer.sh requirements-scraper.txt
 	@scripts/build_py_deps_layer.sh
 
 layers/chrome_layer.zip: scripts/build_chromium_layer.sh
 	@scripts/build_chromium_layer.sh
+
+layers/chromedriver_local_libs_layer.zip: scripts/build_chromedriver_local_libs_layer.sh lib/*
+	@scripts/build_chromedriver_local_libs_layer.sh
+
+layers/scraper_layer.zip: scripts/build_scraper_layer.sh *.py scrape/* scrape/*/* scrape/*/*/*
+	@scripts/build_scraper_layer.sh
 
 test:
 	@curl localhost/2015-03-31/functions/function/invocations -d "$$(cat account_credentials.json)" 2>/dev/null | python3 local/pretty_output.py

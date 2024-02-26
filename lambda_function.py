@@ -1,18 +1,65 @@
 import json
+import os
 import subprocess
+import sys
+from io import FileIO
+from tempfile import TemporaryFile
+
+
+def get_env():
+    env = os.environ.copy()
+
+    # Keep the PYTHONPATH from the lambda environment
+    env["PYTHONPATH"] = ":".join(sys.path)
+
+    # Don't buffer stdout/stderr
+    env["PYTHONUNBUFFERED"] = "1"
+
+    # Disable dbus
+    env["DBUS_SESSION_BUS_ADDRESS"] = "/dev/null"
+
+    return env
+
+
+def TempFile():
+    return TemporaryFile(mode="w+b")
+
+
+def read_file(file: FileIO):
+    file.seek(0)
+    return file.read().decode("utf-8")
 
 
 def lambda_handler(event, _):
-    result = subprocess.run(
-        ["python", "main.py", json.dumps(event)], capture_output=True
-    )
-    if result.returncode != 0:
-        raise AssertionError(result.stderr.decode("utf-8"))
+    with TempFile() as stdout, TempFile() as stderr:
+        try:
+            subprocess.run(
+                ["python", "main.py", json.dumps(event)],
+                stdout=stdout,
+                stderr=stderr,
+                check=True,
+                env=get_env(),
+                timeout=30,
+            )
+            return json.loads(read_file(stdout))
+        except subprocess.TimeoutExpired as e:
+            error_message = str(
+                subprocess.TimeoutExpired(
+                    ["python", "main.py", "..."],
+                    e.timeout,
+                )
+            )
+        except (
+            json.JSONDecodeError,
+            subprocess.CalledProcessError,
+        ) as e:
+            error_message = str(e)
 
-    try:
-        return json.loads(result.stdout.decode("utf-8"))
-    except json.JSONDecodeError:
-        return {"error": result.stdout.decode("utf-8")}
+        return {
+            "status": "error",
+            "stdout": read_file(stdout),
+            "stderr": read_file(stderr) + "\n---\n" + error_message,
+        }
 
 
 if __name__ == "__main__":
