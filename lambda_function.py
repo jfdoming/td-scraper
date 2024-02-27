@@ -30,11 +30,15 @@ def read_file(file: FileIO):
     return file.read().decode("utf-8")
 
 
+CMD_BASE = ["python", "main.py"]
+REDACTED_CMD = ["python", "main.py", "..."]
+
+
 def lambda_handler(event, _):
     with TempFile() as stdout, TempFile() as stderr:
         try:
             subprocess.run(
-                ["python", "main.py", json.dumps(event)],
+                CMD_BASE + [json.dumps(event)],
                 stdout=stdout,
                 stderr=stderr,
                 check=True,
@@ -44,15 +48,13 @@ def lambda_handler(event, _):
             return json.loads(read_file(stdout))
         except subprocess.TimeoutExpired as e:
             error_message = str(
-                subprocess.TimeoutExpired(
-                    ["python", "main.py", "..."],
-                    e.timeout,
-                )
+                subprocess.TimeoutExpired(REDACTED_CMD, e.timeout)
             )
-        except (
-            json.JSONDecodeError,
-            subprocess.CalledProcessError,
-        ) as e:
+        except subprocess.CalledProcessError as e:
+            error_message = str(
+                subprocess.CalledProcessError(e.returncode, REDACTED_CMD)
+            )
+        except json.JSONDecodeError as e:
             error_message = str(e)
 
         return {
