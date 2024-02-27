@@ -2,14 +2,18 @@ FROM --platform=linux/amd64 public.ecr.aws/lambda/python
 
 RUN dnf install -y unzip
 
-COPY layers/ /tmp/layers
+RUN mkdir -p /tmp/layers
 WORKDIR /tmp/layers
+COPY layers/py_deps_layer.zip .
 RUN unzip py_deps_layer.zip -d /opt
+COPY layers/chrome_layer.zip .
 RUN unzip chrome_layer.zip -d /opt
+COPY layers/chromedriver_local_libs_layer.zip .
 RUN unzip chromedriver_local_libs_layer.zip -d /opt
+COPY layers/scraper_layer.zip .
 RUN unzip scraper_layer.zip -d /var/task
-RUN rm -rd /tmp/layers
 
 WORKDIR /var/task
+RUN rm -rd /tmp/layers
 
 CMD ["lambda_function.lambda_handler"]

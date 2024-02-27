@@ -39,7 +39,7 @@ def lambda_handler(event, _):
                 stderr=stderr,
                 check=True,
                 env=get_env(),
-                timeout=30,
+                timeout=60,
             )
             return json.loads(read_file(stdout))
         except subprocess.TimeoutExpired as e:

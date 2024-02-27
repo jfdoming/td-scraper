@@ -17,19 +17,27 @@ chromedriver_json="$(curl -sS https://googlechromelabs.github.io/chrome-for-test
 chromedriver_url="$(echo "$chromedriver_json" | jq -r 'last(.versions | sort_by(.version)[] | select(.version | startswith("'"${version:1:3}"'"))).downloads.chromedriver[] | select(.platform == "linux64").url')"
 curl -SL "$chromedriver_url" --output "$tempdir"/chromedriver.zip
 
+# Executable files.
 mkdir -p "$tempdir"/bin
 tar -xf "$tempdir"/chrome_pack.tar -C "$tempdir"
 brotli -d "$tempdir"/chromium.br -o "$tempdir"/bin/chromium
 scripts/update_cd.sh "$tempdir"/bin/chromium
+chmod +x "$tempdir"/bin/chromium
 unzip -q "$tempdir"/chromedriver.zip -d "$tempdir"/bin
 mv "$tempdir"/bin/chromedriver-linux64/chromedriver "$tempdir"/bin/
+chmod +x "$tempdir"/bin/chromedriver
 
+# These are shared libraries that need to be co-located with the executable.
+brotli -d "$tempdir"/swiftshader.tar.br -o "$tempdir"/swiftshader.tar
+tar -xf "$tempdir"/swiftshader.tar -C "$tempdir"/bin/
+
+# These are shared libraries that can be placed anywhere.
 mkdir -p "$tempdir"/lib
 brotli -d "$tempdir"/al2023.tar.br -o "$tempdir"/aws.tar
 tar -xf "$tempdir"/aws.tar -C "$tempdir"/  # aws.tar contains a lib/ directory
 
 pushd "$tempdir" > /dev/null
-zip -r chrome_layer.zip bin/{chromium,chromedriver} lib/
+zip -r chrome_layer.zip bin/ lib/
 popd > /dev/null
 
 mkdir -p layers/

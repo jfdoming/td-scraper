@@ -1,7 +1,7 @@
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 BASE_OPTS := -p 80:8080 --rm -e IS_DEV=1 \
 		--env-file <(echo "ACCOUNT_TYPES='$$(cat account_types.json)'") \
-		td-scraper
+		--name td-scraper td-scraper
 EXTRA_OPTS := --volume ${ROOT_DIR}/scrape:/var/task/scrape \
 	    --volume ${ROOT_DIR}/main.py:/var/task/main.py \
 		--volume ${ROOT_DIR}/.otp:/var/task/.otp \

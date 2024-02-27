@@ -52,7 +52,7 @@ class SeleniumInterface(Interface):
             self.__get_options()
         )
         self.__service = webdriver.chrome.service.Service(
-            executable_path="/opt/bin/chromedriver"
+            executable_path="/opt/bin/chromedriver",
         )
         self.__driver = None
 

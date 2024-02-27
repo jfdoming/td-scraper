@@ -9,8 +9,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-mkdir -p "$tempdir"/lib
-cp -r lib/ "$tempdir/lib"
+cp -r lib/ "$tempdir/"
 
 pushd "$tempdir" > /dev/null
 zip -r chromedriver_local_libs_layer.zip lib/
