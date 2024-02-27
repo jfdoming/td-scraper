@@ -17,8 +17,6 @@ def main():
         config = read_config_file()
     scrape_latest(Config(**config))
 
-    input("Press Enter to exit")
-
 
 if __name__ == "__main__":
     main()
