@@ -13,6 +13,8 @@ RUN unzip chromedriver_local_libs_layer.zip -d /opt
 COPY layers/scraper_layer.zip .
 RUN unzip scraper_layer.zip -d /var/task
 
+ENV FONTCONFIG_PATH=/opt/.fonts
+
 WORKDIR /var/task
 RUN rm -rd /tmp/layers
 

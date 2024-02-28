@@ -19,6 +19,7 @@ class SeleniumInterface(Interface):
             "disable-dev-shm-usage": True,
             "disable-dev-tools": True,
             "disable-gpu": True,
+            "disable-software-rasterizer": True,
             "remote-debugging-port": 9222,
             "window-size": "1920,1080",
             "user-data-dir": mkdtemp(),

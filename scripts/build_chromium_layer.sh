@@ -19,7 +19,7 @@ curl -SL "$chromedriver_url" --output "$tempdir"/chromedriver.zip
 
 # Executable files.
 mkdir -p "$tempdir"/bin
-tar -xf "$tempdir"/chrome_pack.tar -C "$tempdir"
+tar -xvf "$tempdir"/chrome_pack.tar -C "$tempdir"
 brotli -d "$tempdir"/chromium.br -o "$tempdir"/bin/chromium
 scripts/update_cd.sh "$tempdir"/bin/chromium
 chmod +x "$tempdir"/bin/chromium
@@ -36,8 +36,14 @@ mkdir -p "$tempdir"/lib
 brotli -d "$tempdir"/al2023.tar.br -o "$tempdir"/aws.tar
 tar -xf "$tempdir"/aws.tar -C "$tempdir"/  # aws.tar contains a lib/ directory
 
+# These are fonts that need to live in .fonts.
+mkdir -p "$tempdir/.fonts"
+brotli -d "$tempdir"/fonts.tar.br -o "$tempdir"/fonts.tar
+tar -xf "$tempdir"/fonts.tar --strip-components 1 -C "$tempdir"/.fonts
+cp fonts.conf "$tempdir/.fonts"
+
 pushd "$tempdir" > /dev/null
-zip -r chrome_layer.zip bin/ lib/
+zip -r chrome_layer.zip bin/ lib/ .fonts/
 popd > /dev/null
 
 mkdir -p layers/
