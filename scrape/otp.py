@@ -52,7 +52,7 @@ def __poll_otp_local(otp_request_time: datetime, _):
 
 
 @cache
-def __s3_client() -> boto3.client:
+def __s3_client():
     return boto3.client("s3")
 
 
