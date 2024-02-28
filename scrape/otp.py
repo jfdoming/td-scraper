@@ -70,7 +70,7 @@ def __poll_otp_s3(otp_request_time: datetime, config: Config) -> str | None:
         )
         return unpack_otp(response["Body"].read())
     except client.exceptions.ClientError as e:
-        if e.response["Error"]["Code"] == "NotModified":
+        if e.response["Error"]["Code"] == "304":
             return None
         raise e
 
