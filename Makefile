@@ -48,7 +48,7 @@ layers/scraper_layer.zip: scripts/build_scraper_layer.sh *.py scrape/* scrape/*/
 	@scripts/build_scraper_layer.sh
 
 test:
-	@curl localhost/2015-03-31/functions/function/invocations -d "$$(cat account_credentials.json)" 2>/dev/null | python3 local/pretty_output.py
+	@curl localhost/2015-03-31/functions/function/invocations -d "$$(cat config.json)" 2>/dev/null | python3 local/pretty_output.py
 
 otp:
 	@python3 -c "from pathlib import Path; otp=input('Enter OTP: '); Path('.otp').write_text(otp)"

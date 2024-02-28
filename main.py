@@ -6,7 +6,7 @@ from scrape.config import Config
 
 
 def read_config_file():
-    with open("account_credentials.json", "r") as config:
+    with open("config.json", "r") as config:
         return json.load(config)
 
 

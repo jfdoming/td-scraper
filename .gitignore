@@ -139,8 +139,7 @@ cython_debug/
 
 
 # Config files (local only)
-account_credentials.json
-account_types.json
+*.json
 .otp
 
 # Output
