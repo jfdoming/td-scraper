@@ -38,7 +38,7 @@ layers: layers/py_deps_layer.zip layers/chrome_layer.zip layers/scraper_layer.zi
 layers/py_deps_layer.zip: scripts/build_py_deps_layer.sh requirements-scraper.txt
 	@scripts/build_py_deps_layer.sh
 
-layers/chrome_layer.zip: scripts/build_chromium_layer.sh
+layers/chrome_layer.zip: scripts/build_chromium_layer.sh scripts/update_cd.sh
 	@scripts/build_chromium_layer.sh
 
 layers/chromedriver_local_libs_layer.zip: scripts/build_chromedriver_local_libs_layer.sh lib/*

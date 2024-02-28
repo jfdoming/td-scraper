@@ -19,7 +19,7 @@ curl -SL "$chromedriver_url" --output "$tempdir"/chromedriver.zip
 
 # Executable files.
 mkdir -p "$tempdir"/bin
-tar -xvf "$tempdir"/chrome_pack.tar -C "$tempdir"
+tar -xf "$tempdir"/chrome_pack.tar -C "$tempdir"
 brotli -d "$tempdir"/chromium.br -o "$tempdir"/bin/chromium
 scripts/update_cd.sh "$tempdir"/bin/chromium
 chmod +x "$tempdir"/bin/chromium
