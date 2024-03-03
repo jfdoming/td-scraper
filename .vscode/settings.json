@@ -3,7 +3,7 @@
     "source.organizeImports": "always"
   },
   "python.analysis.autoImportCompletions": true,
-  "python.testing.pytestArgs": ["scrape"],
+  "python.testing.pytestArgs": ["td_scraper"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true
 }

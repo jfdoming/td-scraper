@@ -2,9 +2,9 @@ import os
 import sys
 import time
 
-from scrape.config import Config
+from td_scraper.config import Config
 from scrape.interface import Interface
-from scrape.otp import await_otp
+from td_scraper.otp import await_otp
 
 BASE_URL = "https://easyweb.td.com/"
 

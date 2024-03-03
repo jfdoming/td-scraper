@@ -8,8 +8,8 @@ from typing import Callable
 
 import boto3
 
-from scrape.config import Config
-from scrape.utils.otp import unpack_otp
+from td_scraper.config import Config
+from td_scraper.utils.otp import unpack_otp
 
 OTP_OBJ_KEY = None
 if "IS_DEV" not in os.environ:

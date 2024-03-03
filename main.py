@@ -1,8 +1,8 @@
 import json
 import sys
 
-from scrape import scrape_latest
-from scrape.config import Config
+from td_scraper import scrape_latest
+from td_scraper.config import Config
 
 
 def read_config_file():

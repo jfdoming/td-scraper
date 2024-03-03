@@ -142,8 +142,10 @@ cython_debug/
 *.json
 .otp
 
+# Libraries
+scrape
+requirements.txt
+
 # Output
 data/*
-scrape/*.png
 *.zip
-layers/
